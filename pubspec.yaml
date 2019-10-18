@@ -1,6 +1,6 @@
 name: wetransfer
-description: A new Flutter package project.
-version: 0.0.1
+description: A plugin that allows you to transfer files to WeTransfer.
+version: 0.1.1
 author: Blaxou <blaxoujunior@gmail.com>
 homepage: https://github.com/blaxou/wetransfer
 
@@ -8,8 +8,6 @@ environment:
   sdk: ">=2.1.0 <3.0.0"
 
 dependencies:
-  flutter:
-    sdk: flutter
   http: ^0.12.0+2
   unique_ids: ^1.0.10
   xml: ^3.5.0

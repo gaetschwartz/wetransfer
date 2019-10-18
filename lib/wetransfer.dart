@@ -8,7 +8,6 @@ import 'package:meta/meta.dart';
 import 'package:path/path.dart';
 import 'package:http/http.dart' as http;
 import 'package:unique_ids/unique_ids.dart';
-import 'package:flutter/services.dart';
 import 'dart:math';
 
 @immutable
@@ -121,7 +120,7 @@ class WeTransferClient {
     String uuid;
     try {
       uuid = await UniqueIds.uuid;
-    } on PlatformException {
+    } on Exception {
       throw Exception("Failed to create a UUID for this device !");
     }
 

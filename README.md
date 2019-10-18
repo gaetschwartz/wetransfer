@@ -18,7 +18,7 @@ A Flutter package that allows upload and dowload files to Wetransfer.
     print("Creating transfer");
 
     Transfer transfer = await client.createTransfer(
-        myFiles.toList(), "Test transfer yayyy");
+        myFiles.toList(), "Test transfer.");
 
     print("Transfer with id ${transfer.id} created");
     print("Uploading ${transfer.files.length} files");
