@@ -13,25 +13,27 @@ A Flutter package that allows upload and dowload files to Wetransfer.
  ## Example
 
  ```dart
- Map<String, String> files = await FilePicker.getMultiFilePath();
+    WeTransferClient client = await WeTransferClient.create('<api_key>');
+    
+    print("Creating transfer");
 
- Transfer transfer = await client.createTransfer(
-     files.values.map<File>((f) => File(f)).toList(), "Test transfer yayyy");
+    Transfer transfer = await client.createTransfer(
+        myFiles.toList(), "Test transfer yayyy");
 
- print("Transfer with id ${transfer.id} created");
- print("Uploading ${transfer.files.length} files");
+    print("Transfer with id ${transfer.id} created");
+    print("Uploading ${transfer.files.length} files");
 
- await client
-     .uploadFiles(transfer)
-     .forEach((state) => print('${state.file.name} : ${state.sent}'));
+    await client.uploadFiles(transfer).forEach((state) =>
+        print('${state.file.name} : ${state.sent}/${state.file.size} bytes'));
 
- print('Uploaded all files');
- print("Completing file uploads");
+    print('Uploaded all files');
+    print("Completing file uploads");
+  
+    await client.completeFilesUpload(transfer).forEach((state) => print(
+        '${state.done ? 'Completed' : 'Started completing'} ${state.file.name} upload'));
 
-   await client
-       .completeFilesUpload(transfer)
-       .forEach((state) => print('${state.file.name} : ${state.sent}'));
+    print('Completed all uploads');
+    print("Finalizing transfer");
 
- String url = await client.finalizeTransfer(transfer);
-
+    String url = await client.finalizeTransfer(transfer);
  ```

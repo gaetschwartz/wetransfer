@@ -12,22 +12,25 @@ import 'package:flutter/services.dart';
 import 'dart:math';
 
 @immutable
+@visibleForOverriding
 class FileTransferState {
-  final TransferStateType type;
   final WeTransferFile file;
-  final int sent;
 
-  FileTransferState(this.file, this.sent,
-      {http.StreamedResponse response, this.type});
+  FileTransferState(this.file);
 }
 
-enum TransferStateType {
-  creatingTransfer,
-  requestingURLs,
-  uploadingFiles,
-  completingUploads,
-  finalizingTransfer,
-  retrievingInfos
+@immutable
+class FileUploadCompleteState extends FileTransferState {
+  final bool done;
+
+  FileUploadCompleteState(WeTransferFile file, this.done) : super(file);
+}
+
+@immutable
+class FileUploadState extends FileTransferState {
+  final int sent;
+
+  FileUploadState(WeTransferFile file, this.sent) : super(file);
 }
 
 /// Characterizes a WeTransfer file
@@ -89,32 +92,7 @@ class Transfer {
 /// ```dart
 /// WeTransferClient client = await WeTransferClient.create('<api_key>');
 /// ```
-///
-/// ## Example
-///
-/// ```dart
-/// Map<String, String> files = await FilePicker.getMultiFilePath();
-///
-/// Transfer transfer = await client.createTransfer(
-///     files.values.map<File>((f) => File(f)).toList(), "Test transfer yayyy");
-///
-/// print("Transfer with id ${transfer.id} created");
-/// print("Uploading ${transfer.files.length} files");
-///
-/// await client
-///     .uploadFiles(transfer)
-///     .forEach((state) => print('${state.file.name} : ${state.sent}'));
-///
-/// print('Uploaded all files');
-/// print("Completing file uploads");
-///
-///   await client
-///       .completeFilesUpload(transfer)
-///       .forEach((state) => print('${state.file.name} : ${state.sent}'));
-///
-/// String url = await client.finalizeTransfer(transfer);
-///
-/// ```
+/// Check in the README file for a more in-depth explanation
 class WeTransferClient {
   final http.Client client = http.Client();
   final Credentials credentials;
@@ -218,11 +196,11 @@ class WeTransferClient {
   }
 
   /// Uploads all files of the provided [Transfer]
-  Stream<FileTransferState> uploadFiles(
+  Stream<FileUploadState> uploadFiles(
     Transfer transfer,
   ) async* {
     for (var f in transfer.files) {
-      yield FileTransferState(
+      yield FileUploadState(
         f,
         0,
       );
@@ -231,7 +209,7 @@ class WeTransferClient {
   }
 
   /// Uploads a single file
-  Stream<FileTransferState> uploadFile(
+  Stream<FileUploadState> uploadFile(
       WeTransferFile file, String transferId) async* {
     http.Client _client = http.Client();
     final openedFile = await file.file.open();
@@ -262,7 +240,7 @@ class WeTransferClient {
             "Error while uploading '${file.name}' upload : ${doc.children}");
       }
 
-      yield FileTransferState(
+      yield FileUploadState(
         file,
         end,
       );
@@ -271,12 +249,13 @@ class WeTransferClient {
   }
 
   /// Informs the server that all the uploads of this transfer are done.
-  Stream<FileTransferState> completeFilesUpload(
+  Stream<FileUploadCompleteState> completeFilesUpload(
     Transfer transfer,
   ) async* {
     if (transfer.files?.isEmpty ?? true)
       throw Exception("No files to complete !");
     for (var f in transfer.files) {
+      yield FileUploadCompleteState(f, false);
       var request = http.Request(
           "PUT",
           Uri.parse(
@@ -294,7 +273,7 @@ class WeTransferClient {
         throw Exception(
             "Error while completing '${f.name}' upload : ${respBody['message']}");
       }
-      yield FileTransferState(f, -100);
+      yield FileUploadCompleteState(f, true);
     }
   }
 
