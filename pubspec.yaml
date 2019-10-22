@@ -1,6 +1,6 @@
 name: wetransfer
 description: A plugin that allows you to transfer files to WeTransfer.
-version: 0.1.1
+version: 0.2.0
 author: Blaxou <blaxoujunior@gmail.com>
 homepage: https://github.com/blaxou/wetransfer
 
@@ -12,7 +12,6 @@ dependencies:
   unique_ids: ^1.0.10
   xml: ^3.5.0
   path: ^1.6.4
-  meta: ^1.1.7
 
 dev_dependencies:
   flutter_test:

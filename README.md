@@ -36,4 +36,7 @@ A Flutter package that allows upload and dowload files to Wetransfer.
     print("Finalizing transfer");
 
     String url = await client.finalizeTransfer(transfer);
+
+    //Dont forget to close the client when you don't need it anymore
+    client?.close();
  ```
