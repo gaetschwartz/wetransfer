@@ -26,6 +26,7 @@ class CompleteFileUploadState extends FileTransferState {
 
 class FileUploadState extends FileTransferState {
   final int sent;
+  final DateTime timestamp = DateTime.now();
 
   FileUploadState(WeTransferFile file, this.sent, bool done)
       : super(file, done, TransferType.fileUpload);

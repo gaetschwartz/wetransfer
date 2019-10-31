@@ -1,3 +1,9 @@
+## [0.3.0+0] - 31/10/2019.
+
+* FileUploadState has now now a timestamp
+* The Transfer class is now detailed
+* WeTransferClient.getTransferInfo now returns a Transfer instead of the url of the Transfer
+
 ## [0.2.0+1] - 24/10/2019.
 
 * Added an example

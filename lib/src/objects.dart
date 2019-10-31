@@ -3,14 +3,55 @@ part of wetransfer;
 /// Characterizes a WeTransfer file
 ///
 /// *You shouldn't need to use this class.*
-class WeTransferFile {
+class LocalWeTransferFile extends WeTransferFile {
+  final File file;
+
+  LocalWeTransferFile(
+      {this.file,
+      String name,
+      int size,
+      String id,
+      String type,
+      int partNumbers,
+      int chunkSize})
+      : super(
+            name: name,
+            size: size,
+            id: id,
+            type: type,
+            partNumbers: partNumbers,
+            chunkSize: chunkSize);
+
+  LocalWeTransferFile.fromJSON(Map<String, dynamic> map, this.file)
+      : super.fromJSON(map);
+}
+
+class RemoteWeTransferFile extends WeTransferFile {
+  RemoteWeTransferFile(
+      {String name,
+      int size,
+      String id,
+      String type,
+      int partNumbers,
+      int chunkSize})
+      : super(
+            name: name,
+            size: size,
+            id: id,
+            type: type,
+            partNumbers: partNumbers,
+            chunkSize: chunkSize);
+
+  RemoteWeTransferFile.fromJSON(Map<String, dynamic> map) : super.fromJSON(map);
+}
+
+abstract class WeTransferFile {
   final String name;
   final int size;
   final String id;
   final String type;
   final int partNumbers;
   final int chunkSize;
-  final File file;
 
   WeTransferFile(
       {this.name,
@@ -18,11 +59,11 @@ class WeTransferFile {
       this.id,
       this.type,
       this.partNumbers,
-      this.file,
       this.chunkSize});
 
-  WeTransferFile.fromJSON(Map<String, dynamic> map, this.file)
-      : id = map['id'],
+  WeTransferFile.fromJSON(
+    Map<String, dynamic> map,
+  )   : id = map['id'],
         size = map['size'],
         name = map['name'],
         type = map['type'] ?? 'file',
@@ -48,11 +89,14 @@ class Transfer {
   final String message;
   final String id;
   final List<WeTransferFile> files;
+  final RemoteState state;
+  final String url;
+  final DateTime expiresAt;
 
-  Transfer({
-    this.files,
-    this.id,
-    this.message,
-  })  : assert(id != null),
+  Transfer(
+      {this.files, this.expiresAt, this.id, this.message, this.state, this.url})
+      : assert(id != null),
         assert(files != null);
 }
+
+enum RemoteState { uploading, processing, downloadable, unknown }

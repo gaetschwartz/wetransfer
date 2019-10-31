@@ -1,6 +1,6 @@
 name: wetransfer
 description: A package that allows you to easily transfer files to WeTransfer and retrieve the trnasfer link.
-version: 0.2.0+1
+version: 0.3.0+0
 author: Blaxou <blaxoujunior@gmail.com>
 homepage: https://github.com/blaxou/wetransfer
 

@@ -13,6 +13,11 @@ part of wetransfer;
 class WeTransferException implements Exception {
   final String cause;
   WeTransferException(this.cause);
+
+  @override
+  String toString() {
+    return "WeTransferException : $cause";
+  }
 }
 
 class WeTransferClient {
@@ -20,11 +25,17 @@ class WeTransferClient {
   final Credentials credentials;
   final JsonDecoder decoder = JsonDecoder();
   final JsonEncoder encoder = JsonEncoder();
-  final Map<String, String> auth;
+  final Map<String, String> _auth;
+  static const Map<String, RemoteState> _stringToState = {
+    'uploading': RemoteState.uploading,
+    'downloadable': RemoteState.downloadable,
+    'processing': RemoteState.processing,
+    "unknown": RemoteState.unknown
+  };
 
   WeTransferClient({this.credentials})
       : assert(credentials != null),
-        auth = {
+        _auth = {
           "x-api-key": credentials.apiKey,
           "Authorization": "Bearer ${credentials.userToken}",
           "Content-Type": "application/json"
@@ -71,7 +82,7 @@ class WeTransferClient {
     var request = http.Request(
         "POST", Uri.parse("https://dev.wetransfer.com/v2/transfers"));
 
-    request.headers.addAll(auth);
+    request.headers.addAll(_auth);
 
     List<Map<String, dynamic>> filesField = await Stream.fromIterable(files)
         .asyncMap(
@@ -89,7 +100,7 @@ class WeTransferClient {
     return Transfer(
       id: respBody['id'],
       files: (respBody['files'] as List)
-          .map((m) => WeTransferFile.fromJSON(
+          .map((m) => LocalWeTransferFile.fromJSON(
               m, files.firstWhere((f) => m['name'] == basename(f.path))))
           .toList(),
       message: respBody['message'],
@@ -105,7 +116,7 @@ class WeTransferClient {
         "GET",
         Uri.parse(
             "https://dev.wetransfer.com/v2/transfers/$transferId/files/${file.id}/upload-url/$part"));
-    request.headers.addAll(auth);
+    request.headers.addAll(_auth);
 
     var resp = await client.send(request);
     String respString = await resp.stream.bytesToString();
@@ -130,7 +141,7 @@ class WeTransferClient {
 
   /// Uploads a single file
   Stream<FileTransferState> uploadFile(
-      String transferId, WeTransferFile file) async* {
+      String transferId, LocalWeTransferFile file) async* {
     http.Client _client = http.Client();
     final openedFile = await file.file.open();
     for (var i = 0; i < file.partNumbers; i++) {
@@ -175,7 +186,7 @@ class WeTransferClient {
         Uri.parse(
             "https://dev.wetransfer.com/v2/transfers/$transferId/files/${file.id}/upload-complete"));
 
-    request.headers.addAll(auth);
+    request.headers.addAll(_auth);
 
     request.body = encoder.convert({'part_numbers': file.partNumbers});
     var resp = await client.send(request);
@@ -197,7 +208,7 @@ class WeTransferClient {
         Uri.parse(
             "https://dev.wetransfer.com/v2/transfers/${transfer.id}/finalize"));
 
-    request.headers.addAll(auth);
+    request.headers.addAll(_auth);
 
     var resp = await client.send(request);
     String respString = await resp.stream.bytesToString();
@@ -206,11 +217,12 @@ class WeTransferClient {
   }
 
   /// Gets the download url of a transfer
-  Future<String> getTransferInfo(Transfer transfer) async {
-    var request = http.Request("PUT",
-        Uri.parse("https://dev.wetransfer.com/v2/transfers/${transfer.id}"));
+  Future<Transfer> getTransferInfo(String transferId) async {
+    var request = http.Request("GET",
+        Uri.parse("https://dev.wetransfer.com/v2/transfers/$transferId"));
 
-    request.headers.addAll(auth);
+    request.headers.addAll(_auth);
+    request.headers.remove("Content-Type");
 
     var resp = await client.send(request);
     String respString = await resp.stream.bytesToString();
@@ -218,8 +230,17 @@ class WeTransferClient {
     String url = respBody['url'];
     if (url == null)
       throw WeTransferException(
-          "Couldn't retrieve transfer infos ${transfer.id} !");
-    return url;
+          "Couldn't retrieve transfer infos $transferId !");
+    List<WeTransferFile> files = respBody['files']
+        .map<WeTransferFile>((f) => RemoteWeTransferFile.fromJSON(f))
+        .toList();
+    return Transfer(
+        id: transferId,
+        message: respBody['message'],
+        url: respBody['url'],
+        state: _stringToState[respBody['state'] ?? "uknown"],
+        expiresAt: DateTime.parse(respBody['expires_at']),
+        files: files);
   }
 
   /// Closes the client and cleans up any resources associated with it.
@@ -227,5 +248,5 @@ class WeTransferClient {
   /// failing to do so can cause the Dart process to hang.
   ///
   /// *Copied from package:http/src/client.dart*
-  void close() => client.close();
+  void close() => client?.close();
 }
