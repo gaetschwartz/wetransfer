@@ -26,7 +26,7 @@ class _AppState extends State<App> {
   @override
   void initState() {
     super.initState();
-    WeTransferClient.create('cTx6MZXt6n8So0PMNn5uq4YdHq54RIhS3bNYIBG8')
+    WeTransferClient.create('<your api key>')
         .then((cli) => setState(() => client = cli));
   }
 
